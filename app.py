@@ -56,17 +56,14 @@
 from flask import Flask, render_template, request, jsonify
 import cv2
 import numpy as np
-import tflite_runtime.interpreter as tflite  # Lightweight runtime
+import onnxruntime as ort  # Replace TensorFlow with ONNX Runtime
 
 app = Flask(__name__)
 
-# Load TFLite model
-interpreter = tflite.Interpreter(model_path='retinopathy.tflite')
-interpreter.allocate_tensors()
-
-# Get input/output details
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
+# Load ONNX model
+ort_session = ort.InferenceSession('retinopathy.onnx')
+input_name = ort_session.get_inputs()[0].name
+output_name = ort_session.get_outputs()[0].name
 
 CLASS_LABELS = {
     0: "No DR",
@@ -95,27 +92,26 @@ def predict():
         nparr = np.frombuffer(img_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
-        # Preprocessing (must match training)
+        # Preprocessing (must match training pipeline)
         resized = cv2.resize(img, (224, 224))
         normalized = resized / 255.0
-        input_img = np.expand_dims(normalized, axis=0).astype(np.float32)
+        input_img = np.expand_dims(normalized, axis=0).astype(np.float32)  # Critical: dtype must be float32
 
-        # Set input and run inference
-        interpreter.set_tensor(input_details[0]['index'], input_img)
-        interpreter.invoke()
-        
-        # Get predictions
-        prediction = interpreter.get_tensor(output_details[0]['index'])
+        # ONNX inference
+        ort_inputs = {input_name: input_img}
+        ort_outputs = ort_session.run([output_name], ort_inputs)
+        prediction = ort_outputs[0][0]
+
         predicted_class = int(np.argmax(prediction))
-        confidence = float(prediction[0][predicted_class])
+        confidence = float(prediction[predicted_class])
 
         return jsonify({
             'class': CLASS_LABELS[predicted_class],
             'confidence': confidence,
             'class_id': predicted_class,
-            'probabilities': prediction[0].tolist()
+            'probabilities': prediction.tolist()
         })
-        
+    
     except Exception as e:
         return jsonify({'error': str(e)})
 
