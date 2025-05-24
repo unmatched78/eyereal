@@ -2,8 +2,9 @@ venv
 .env
 retinopathy.tflite
 convert.py
-Blind_DetectionV1.keras
-*.keras
+# Blind_DetectionV1.keras
+# *.keras
 *.h5
+*.onnx  # Keep only the production model
 __pycache__
 venv
