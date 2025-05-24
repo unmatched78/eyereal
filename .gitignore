@@ -3,3 +3,7 @@ venv
 retinopathy.tflite
 convert.py
 Blind_DetectionV1.keras
+*.keras
+*.h5
+__pycache__
+venv
