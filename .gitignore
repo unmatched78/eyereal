@@ -7,4 +7,16 @@ convert.py
 *.h5
 *.onnx  # Keep only the production model
 __pycache__
-venv
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+# Jupyter Notebook metadata
+.ipynb
+# Python bytecode files
+*.pyc
+# Logs
+*.log
+# Temporary files
+*.tmp
+fla.py
+static
+templates
